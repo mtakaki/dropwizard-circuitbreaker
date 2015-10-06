@@ -1,0 +1,6 @@
+circuitBreaker:
+  threshold: 0.5
+  rateType: ONE_MINUTE
+
+logging:
+  level: ERROR
