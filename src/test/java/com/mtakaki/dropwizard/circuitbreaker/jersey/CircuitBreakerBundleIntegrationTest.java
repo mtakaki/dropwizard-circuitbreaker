@@ -137,8 +137,8 @@ public class CircuitBreakerBundleIntegrationTest {
         // We should get 503 - Service unavailable.
         this.sendGetRequestAndVerifyStatus(503);
 
-        // Verifying the meter was called once the exception happened.
-        verify(meter.get(), only()).mark();
+        // Verifying the meter was not called because the circuit was opened.
+        verify(meter.get(), times(0)).mark();
     }
 
     /**
@@ -152,16 +152,17 @@ public class CircuitBreakerBundleIntegrationTest {
         // We should get 503 - Service unavailable.
         this.sendGetRequestAndVerifyStatus(503);
 
-        // Verifying the meter was called once the exception happened.
-        verify(meter.get(), only()).mark();
+        // Verifying the meter was not called because the circuit was opened.
+        verify(meter.get(), times(0)).mark();
 
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(false);
 
         // We should get 500 again.
         this.sendGetRequestAndVerifyStatus(500);
 
-        // Verifying the meter was called twice.
-        verify(meter.get(), times(2)).mark();
+        // Verifying the meter was called only once as the the first time the
+        // circuit was opened.
+        verify(meter.get(), times(1)).mark();
     }
 
     /**
