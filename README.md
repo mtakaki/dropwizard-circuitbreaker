@@ -18,7 +18,7 @@ To use this library as a stand-alone circuit breaker, you will need to build the
 
 ```
 // We build the CircuitBreakerManager with a threshold of 0.5 failure per second and we'll
-// be using the a 1-minute rate to determine if our circuit should be opened or not.
+// be using a 1-minute average rate to determine if our circuit should be opened or not.
 CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry, 0.5, CircuitBreakerManager.RateType.ONE_MINUTE);
 // When this exception below is thrown, the meter will be increased.
 circuitBreaker.wrapCodeBlockWithCircuitBreaker("my.test.block", (meter) -> {
