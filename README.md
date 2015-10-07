@@ -1,13 +1,13 @@
 ### Status
 [![Build Status](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker.svg?branch=master)](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker)
 [![Coverage Status](https://coveralls.io/repos/mtakaki/dropwizard-circuitbreaker/badge.svg?branch=master&service=github)](https://coveralls.io/github/mtakaki/dropwizard-circuitbreaker?branch=master)
-[ ![Download](https://api.bintray.com/packages/mtakaki/maven/dropwizard-circuitbreaker/images/download.svg) ](https://bintray.com/mtakaki/maven/dropwizard-circuitbreaker/_latestVersion)
+[![Download](https://api.bintray.com/packages/mtakaki/maven/dropwizard-circuitbreaker/images/download.svg)](https://bintray.com/mtakaki/maven/dropwizard-circuitbreaker/_latestVersion)
 
 # Circuit Breaker Library
 
 This library provides a simple implementation of a [circuit breaker design pattern](https://en.wikipedia.org/wiki/Circuit_breaker_design_pattern).
 
-It uses [dropwizard metrics](http://metrics.dropwizard.io/) to provide insights on the rate of failures and, with it, we can reliably assuming a certain functionality is having issues. After a certain threshold is hit the circuit is opened and an exception is thrown.
+It uses [dropwizard metrics](http://metrics.dropwizard.io/) to provide insights on the rate of failures and, with it, we can reliably assume a certain functionality is having issues. After a certain threshold is hit the circuit is opened and an exception is thrown, preventing from increasing the load on the failing code.
 
 This library can be used as a stand-alone library or embedded into [dropwizard](http://www.dropwizard.io/), through the usage of annotations.
 
@@ -17,7 +17,7 @@ This library can be used as a stand-alone library or embedded into [dropwizard](
 
 To use this library as a stand-alone circuit breaker, you will need to build the object and pass a `MetricRegistry`. And it can be used to wrap code blocks, which can throw exceptions.
 
-```
+```java
 // We build the CircuitBreakerManager with a threshold of 0.5 failure per second and we'll
 // be using a 1-minute average rate to determine if our circuit should be opened or not.
 CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry, 0.5, CircuitBreakerManager.RateType.ONE_MINUTE);
@@ -30,7 +30,7 @@ circuitBreaker.wrapCodeBlockWithCircuitBreaker("my.test.block", (meter) -> {
 
 After several exceptions, and when the rate reaches the threshold, the method `wrapCodeBlockWithCircuitBreaker()` will thrown a `CircuitBreakerOpenedException` and won't run the code block anymore. Alternatively you can run it without throwing an exception, but you need to manually verify if the circuit is opened.
 
-```
+```java
 CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry, 0.5, CircuitBreakerManager.RateType.ONE_MINUTE);
 
 if (!circuitBreaker.isCircuitOpen("my.test.block")) {
@@ -56,7 +56,7 @@ The annotation `@CircuitBreaker` should not be used in conjunction with `@Except
 
 The configuration class can add reference to `CircuitBreaker` class, which holds the threshold and rate type:
 
-```
+```java
 public class MyAppConfiguration extends Configuration {
     private CircuitBreakerConfiguration circuitBreaker;
     
@@ -68,7 +68,7 @@ public class MyAppConfiguration extends Configuration {
 
 Your configuration YML will look like this:
 
-```
+```yaml
 circuitBreaker:
   threshold: 0.5
   rateType: ONE_MINUTE
@@ -76,7 +76,7 @@ circuitBreaker:
 
 To register the bundle in the application:
 
-```
+```java
 public class MyApp extends Application {
     public static void main(final String[] args) throws Exception {
         new MyApp().run(args);
@@ -105,7 +105,7 @@ public class MyApp extends Application {
 
 To annotate the resource:
 
-```
+```java
 @Path("/test")
 public class TestResource {
     @GET
@@ -120,7 +120,7 @@ Now the API `localhost:8080/test` will keep returning `500 Internal Server Error
 
 The meter is available in the `metrics` page under the admin port like any other meter.
 
-```
+```json
 ...
   "meters" : {
   ...
@@ -141,7 +141,7 @@ The meter is available in the `metrics` page under the admin port like any other
 
 To add depedency to maven, you will need to add the following lines to your `pom.xml`:
 
-```
+```xml
 ...
 <repositories>
   <repository>
