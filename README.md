@@ -1,5 +1,6 @@
 ### Status
 [![Build Status](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker.svg?branch=master)](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker)
+[![Coverage Status](https://coveralls.io/repos/mtakaki/dropwizard-circuitbreaker/badge.svg?branch=master&service=github)](https://coveralls.io/github/mtakaki/dropwizard-circuitbreaker?branch=master)
 [ ![Download](https://api.bintray.com/packages/mtakaki/maven/dropwizard-circuitbreaker/images/download.svg) ](https://bintray.com/mtakaki/maven/dropwizard-circuitbreaker/_latestVersion)
 
 # Circuit Breaker Library
