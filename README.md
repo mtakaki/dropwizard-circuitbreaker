@@ -121,9 +121,7 @@ Now the API `localhost:8080/test` will keep returning `500 Internal Server Error
 The meter is available in the `metrics` page under the admin port like any other meter.
 
 ```json
-...
   "meters" : {
-  ...
     "com.mtakaki.testcb.TestResource.get" : {
       "count" : 51,
       "m15_rate" : 0.055135750452891936,
@@ -132,9 +130,7 @@ The meter is available in the `metrics` page under the admin port like any other
       "mean_rate" : 1.1303494869953181,
       "units" : "events/second"
     },
-  ...
   }
-...
 ```
 
 ## Maven
