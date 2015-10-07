@@ -1,5 +1,6 @@
 ### Status
 [![Build Status](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker.svg?branch=master)](https://travis-ci.org/mtakaki/dropwizard-circuitbreaker)
+[![Coverage Status](https://coveralls.io/repos/mtakaki/dropwizard-circuitbreaker/badge.svg?branch=master&service=github)](https://coveralls.io/github/mtakaki/dropwizard-circuitbreaker?branch=master)
 [ ![Download](https://api.bintray.com/packages/mtakaki/maven/dropwizard-circuitbreaker/images/download.svg) ](https://bintray.com/mtakaki/maven/dropwizard-circuitbreaker/_latestVersion)
 
 # Circuit Breaker Library
@@ -18,7 +19,7 @@ To use this library as a stand-alone circuit breaker, you will need to build the
 
 ```
 // We build the CircuitBreakerManager with a threshold of 0.5 failure per second and we'll
-// be using the a 1-minute rate to determine if our circuit should be opened or not.
+// be using a 1-minute average rate to determine if our circuit should be opened or not.
 CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry, 0.5, CircuitBreakerManager.RateType.ONE_MINUTE);
 // When this exception below is thrown, the meter will be increased.
 circuitBreaker.wrapCodeBlockWithCircuitBreaker("my.test.block", (meter) -> {
