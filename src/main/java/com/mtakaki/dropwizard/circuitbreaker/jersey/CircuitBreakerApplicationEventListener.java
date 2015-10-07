@@ -50,7 +50,8 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
                 if (event.getType() == RequestEvent.Type.RESOURCE_METHOD_START
                         && this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
                     throw new WebApplicationException(Response.Status.SERVICE_UNAVAILABLE);
-                } else if (event.getType() == RequestEvent.Type.ON_EXCEPTION) {
+                } else if (event.getType() == RequestEvent.Type.ON_EXCEPTION
+                        && !this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
                     this.meterMap.get(actualCircuitName).mark();
                 }
             });
