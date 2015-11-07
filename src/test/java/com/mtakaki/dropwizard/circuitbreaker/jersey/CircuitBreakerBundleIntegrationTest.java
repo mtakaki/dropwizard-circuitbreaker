@@ -18,6 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
 
@@ -35,7 +36,8 @@ import lombok.Getter;
 
 public class CircuitBreakerBundleIntegrationTest {
     private static final String METER_NAME = CircuitBreakerBundleIntegrationTest.TestResource.class
-            .getTypeName() + ".get";
+            .getTypeName() + ".get.circuitBreaker";
+    private static final String OPEN_CIRCUIT_METER_NAME = METER_NAME + ".openCircuit";
 
     @Path("/test")
     public static class TestResource {
@@ -71,10 +73,15 @@ public class CircuitBreakerBundleIntegrationTest {
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
                 circuitBreakerManager.set(circuitBreaker);
 
+                // Creating the mock Meter that is marked only when there are
+                // exceptions and the circuit is not open.
                 final Meter meter = mock(Meter.class);
                 CircuitBreakerBundleIntegrationTest.meter.set(meter);
 
                 when(circuitBreaker.getMeter(METER_NAME)).thenReturn(meter);
+
+                CircuitBreakerBundleIntegrationTest.metricRegistry.set(environment.metrics());
+
                 return circuitBreaker;
             }
         };
@@ -99,6 +106,7 @@ public class CircuitBreakerBundleIntegrationTest {
 
     public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
     public static ThreadLocal<Meter> meter = new ThreadLocal<>();
+    public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Before
     public void setupClient() {
@@ -119,12 +127,16 @@ public class CircuitBreakerBundleIntegrationTest {
     @Test
     public void testMeterCountIsIncremented() {
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(false);
+        final Meter openCircuitMeter = metricRegistry.get().meter(OPEN_CIRCUIT_METER_NAME);
+        final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We wanted this request to fail.
         this.sendGetRequestAndVerifyStatus(500);
 
         // Verifying the meter was called once the exception happened.
         verify(meter.get(), only()).mark();
+        // The count of our open circuit meter should be the same.
+        assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
     }
 
     /**
@@ -133,12 +145,16 @@ public class CircuitBreakerBundleIntegrationTest {
     @Test
     public void testCircuitBreakerIsOpened() {
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(true);
+        final Meter openCircuitMeter = metricRegistry.get().meter(OPEN_CIRCUIT_METER_NAME);
+        final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
         this.sendGetRequestAndVerifyStatus(503);
 
         // Verifying the meter was not called because the circuit was opened.
         verify(meter.get(), times(0)).mark();
+        // The count of our open circuit meter should have increased.
+        assertThat(openCircuitMeter.getCount()).isGreaterThan(beforeOpenCircuitCount);
     }
 
     /**
@@ -148,9 +164,14 @@ public class CircuitBreakerBundleIntegrationTest {
     @Test
     public void testCircuitBreakerIsOpenedAndClosesAgain() {
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(true);
+        final Meter openCircuitMeter = metricRegistry.get().meter(OPEN_CIRCUIT_METER_NAME);
+        final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
         this.sendGetRequestAndVerifyStatus(503);
+        // The count of our open circuit meter should have increased.
+        final long afterOpenCircuitCount = openCircuitMeter.getCount();
+        assertThat(afterOpenCircuitCount).isGreaterThan(beforeOpenCircuitCount);
 
         // Verifying the meter was not called because the circuit was opened.
         verify(meter.get(), times(0)).mark();
@@ -163,6 +184,9 @@ public class CircuitBreakerBundleIntegrationTest {
         // Verifying the meter was called only once as the the first time the
         // circuit was opened.
         verify(meter.get(), times(1)).mark();
+        // The count of our open circuit meter should be the same as
+        // afterOpenCircuitCount.
+        assertThat(openCircuitMeter.getCount()).isEqualTo(afterOpenCircuitCount);
     }
 
     /**

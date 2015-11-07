@@ -11,7 +11,14 @@ It uses [dropwizard metrics](http://metrics.dropwizard.io/) to provide insights 
 
 This library can be used as a stand-alone library or embedded into [dropwizard](http://www.dropwizard.io/), through the usage of annotations.
 
-[Project lombok](https://projectlombok.org/) was used to auto-generate the getter and setters, so you will need to have lombok plugin installed in your eclipse/intellij if you want to import the source code. The project also uses Java 8 features, such as `Optional` and lambda expressions, so it's not compatible with prior versions. And this library current supports dropwizard `0.8.4`.
+[Project lombok](https://projectlombok.org/) was used to auto-generate the getter and setters, so you will need to have lombok plugin installed in your eclipse/intellij if you want to import the source code. The project also uses Java 8 features, such as `Optional` and lambda expressions, so it's not compatible with prior versions.
+
+These are the supported versions of dropwizard:
+
+| Dropwizard  |  Circuit Breaker |
+|---|---|
+| 0.8.X  | 0.0.2  |
+| 0.9.X  | 0.0.3  |
 
 ## Stand-alone
 
@@ -118,11 +125,11 @@ public class TestResource {
 
 Now the API `localhost:8080/test` will keep returning `500 Internal Server Error` until it reaches 0.5 exceptions per second (the rate set in our configuration) looking at the 1 minute average (also set in our configuration). Once that happens you will start getting `503 Service Unavailable`. After a couple of seconds the rate will decrease, even if you keep hitting the service and getting `503` responses, and you will be getting `500` once again.
 
-The meter is available in the `metrics` page under the admin port like any other meter.
+The meter is available in the `metrics` page under the admin port like any other meter. The `circuitBreaker` one measures the exceptions in the API, while `circuiteBreaker.openCircuit` measures the requests that didn't hit your API due to the circuit being open. The latter is only available from version `0.0.3`.
 
 ```json
   "meters" : {
-    "com.mtakaki.testcb.TestResource.get" : {
+    "com.mtakaki.testcb.TestResource.get.circuitBreaker" : {
       "count" : 51,
       "m15_rate" : 0.055135750452891936,
       "m1_rate" : 0.564668417659197,
@@ -130,6 +137,15 @@ The meter is available in the `metrics` page under the admin port like any other
       "mean_rate" : 1.1303494869953181,
       "units" : "events/second"
     },
+    "com.mtakaki.testcb.TestResource.get.circuitBreaker.openCircuit" : {
+      "count" : 29,
+      "m15_rate" : 0.03204704240331378,
+      "m1_rate" : 0.44614897600789627,
+      "m5_rate" : 0.09510333717433071,
+      "mean_rate" : 0.8154557050860357,
+      "units" : "events/second"
+    },
+
   }
 ```
 
@@ -156,7 +172,7 @@ To add depedency to maven, you will need to add the following lines to your `pom
   <dependency>
     <groupId>com.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
   </dependency>
 </dependencies>
 ```

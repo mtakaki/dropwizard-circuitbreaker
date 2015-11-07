@@ -1,10 +1,10 @@
 package com.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -20,6 +20,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
 
 import lombok.AllArgsConstructor;
@@ -36,10 +37,13 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @Provider
 public class CircuitBreakerApplicationEventListener implements ApplicationEventListener {
+    private static final String SUFFIX = ".circuitBreaker";
+    private static final String OPEN_CIRCUIT_SUFFIX = ".openCircuit";
+
     @AllArgsConstructor
     private static class CircuitBreakerEventListener implements RequestEventListener {
         private final CircuitBreakerManager circuitBreakerManager;
-        private final Map<String, Meter> meterMap;
+        private final ConcurrentMap<String, Meter> meterMap;
 
         @Override
         public void onEvent(final RequestEvent event) {
@@ -49,6 +53,7 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
             circuitName.ifPresent((actualCircuitName) -> {
                 if (event.getType() == RequestEvent.Type.RESOURCE_METHOD_START
                         && this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
+                    this.meterMap.get(actualCircuitName + OPEN_CIRCUIT_SUFFIX).mark();
                     throw new WebApplicationException(Response.Status.SERVICE_UNAVAILABLE);
                 } else if (event.getType() == RequestEvent.Type.ON_EXCEPTION
                         && !this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
@@ -58,8 +63,9 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
         }
     }
 
+    private final MetricRegistry metricRegistry;
     private final CircuitBreakerManager circuitBreaker;
-    private final Map<String, Meter> meterMap = new HashMap<>();
+    private final ConcurrentMap<String, Meter> meterMap = new ConcurrentHashMap<>();
 
     @Override
     public void onEvent(final ApplicationEvent event) {
@@ -74,6 +80,14 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
         }
     }
 
+    /**
+     * Registers all the given {@link ResourceMethod} into the meter map and in
+     * the {@link MetricRegistry}.
+     *
+     * @param resourceMethods
+     *            A list of {@link ResourceMethod} that will be metered for
+     *            failures.
+     */
     private void registerCircuitBreakerAnnotations(final List<ResourceMethod> resourceMethods) {
         for (final ResourceMethod resourceMethod : resourceMethods) {
             this.registerCircuitBreakerAnnotations(resourceMethod);
@@ -85,11 +99,23 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
 
         if (circuitName.isPresent()) {
             final String actualCircuitName = circuitName.get();
-            final Meter meter = this.circuitBreaker.getMeter(actualCircuitName);
-            this.meterMap.put(actualCircuitName, meter);
+            this.meterMap.put(actualCircuitName, this.circuitBreaker.getMeter(actualCircuitName));
+            this.meterMap.put(actualCircuitName + OPEN_CIRCUIT_SUFFIX,
+                    this.metricRegistry.meter(actualCircuitName + OPEN_CIRCUIT_SUFFIX));
         }
     }
 
+    /**
+     * Builds the circuit breaker name with the given {@link ResourceMethod}. It
+     * the method is {@code null} or the method is not annotated with
+     * {@link CircuitBreaker} it will return {@code Optional.empty()}.
+     *
+     * @param resourceMethod
+     *            The method that may contain a {@linkplain CircuitBreaker}
+     *            annotation and will be monitored.
+     * @return An Optional of the circuit breaker name or
+     *         {@code Optional.empty()} if it's not annotated.
+     */
     private static Optional<String> getCircuitBreakerName(final ResourceMethod resourceMethod) {
         if (resourceMethod == null) {
             return Optional.empty();
@@ -123,7 +149,8 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
      * @return A String that represents the class and method.
      */
     private static String name(final Class<?> clazz, final String methodName) {
-        return new StringBuilder(clazz.getName()).append(".").append(methodName).toString();
+        return new StringBuilder(clazz.getName()).append(".").append(methodName).append(SUFFIX)
+                .toString();
     }
 
     @Override
