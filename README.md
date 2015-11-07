@@ -144,8 +144,7 @@ The meter is available in the `metrics` page under the admin port like any other
       "m5_rate" : 0.09510333717433071,
       "mean_rate" : 0.8154557050860357,
       "units" : "events/second"
-    },
-
+    }
   }
 ```
 
