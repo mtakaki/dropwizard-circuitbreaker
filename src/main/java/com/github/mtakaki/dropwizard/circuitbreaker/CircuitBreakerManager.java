@@ -1,10 +1,10 @@
-package com.mtakaki.dropwizard.circuitbreaker;
+package com.github.mtakaki.dropwizard.circuitbreaker;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
+import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
 
 import lombok.Getter;
 

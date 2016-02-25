@@ -1,6 +1,6 @@
-package com.mtakaki.dropwizard.circuitbreaker.jersey;
+package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
-import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
 
 import lombok.Getter;
 import lombok.Setter;

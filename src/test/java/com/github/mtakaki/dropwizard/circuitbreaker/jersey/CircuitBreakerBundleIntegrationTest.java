@@ -1,4 +1,4 @@
-package com.mtakaki.dropwizard.circuitbreaker.jersey;
+package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -20,7 +20,10 @@ import org.junit.Test;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
-import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
+import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerBundle;
+import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerConfiguration;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;

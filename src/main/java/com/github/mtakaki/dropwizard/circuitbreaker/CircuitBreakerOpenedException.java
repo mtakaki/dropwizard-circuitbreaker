@@ -1,4 +1,4 @@
-package com.mtakaki.dropwizard.circuitbreaker;
+package com.github.mtakaki.dropwizard.circuitbreaker;
 
 /**
  * Exception thrown when a code block tries to execute and the circuit breaker

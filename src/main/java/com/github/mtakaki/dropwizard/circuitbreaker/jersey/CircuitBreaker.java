@@ -1,4 +1,4 @@
-package com.mtakaki.dropwizard.circuitbreaker.jersey;
+package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
