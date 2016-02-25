@@ -8,7 +8,8 @@
     <packaging>jar</packaging>
 
     <name>dropwizard-circuitbreaker</name>
-    <url>http://maven.apache.org</url>
+    <description>A circuit breaker design pattern implementation.</description>
+    <url>https://github.com/mtakaki/dropwizard-circuitbreaker</url>
 
     <licenses>
         <license>
@@ -17,6 +18,15 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <name>Mitsuo Takaki</name>
+            <email>mitsuotakaki@gmail.com</email>
+            <organization>mtakaki</organization>
+            <organizationUrl>https://github.com/mtakaki/</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
