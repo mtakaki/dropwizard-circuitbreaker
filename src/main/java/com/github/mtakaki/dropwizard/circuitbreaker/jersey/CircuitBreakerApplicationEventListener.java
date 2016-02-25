@@ -1,4 +1,4 @@
-package com.mtakaki.dropwizard.circuitbreaker.jersey;
+package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
 
 import lombok.AllArgsConstructor;
 

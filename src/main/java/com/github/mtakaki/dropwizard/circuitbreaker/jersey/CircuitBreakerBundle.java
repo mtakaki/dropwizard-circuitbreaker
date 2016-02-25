@@ -1,7 +1,7 @@
-package com.mtakaki.dropwizard.circuitbreaker.jersey;
+package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import com.codahale.metrics.MetricRegistry;
-import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.ConfiguredBundle;

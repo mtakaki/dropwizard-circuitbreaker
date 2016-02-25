@@ -1,4 +1,4 @@
-package com.mtakaki.dropwizard.circuitbreaker;
+package com.github.mtakaki.dropwizard.circuitbreaker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -20,7 +20,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateType;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerOpenedException;
+import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CircuitBreakerManagerTest {

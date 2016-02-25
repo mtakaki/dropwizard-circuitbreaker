@@ -18,7 +18,7 @@ These are the supported versions of dropwizard:
 | Dropwizard  |  Circuit Breaker |
 |---|---|
 | 0.8.X  | 0.0.2  |
-| 0.9.X  | 0.0.3  |
+| 0.9.X  | 0.0.4  |
 
 ## Stand-alone
 
@@ -150,28 +150,14 @@ The meter is available in the `metrics` page under the admin port like any other
 
 ## Maven
 
-To add depedency to maven, you will need to add the following lines to your `pom.xml`:
+The library is available at the maven central, so just add depedency to `pom.xml`:
 
 ```xml
-...
-<repositories>
-  <repository>
-     <id>bintray</id>
-     <url>http://dl.bintray.com/mtakaki/maven</url>
-     <releases>
-       <enabled>true</enabled>
-     </releases>
-     <snapshots>
-       <enabled>false</enabled>
-     </snapshots>
-   </repository>
-</repositories>
-...
 <dependencies>
   <dependency>
-    <groupId>com.mtakaki</groupId>
+    <groupId>com.github.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
   </dependency>
 </dependencies>
 ```
