@@ -150,7 +150,7 @@ The meter is available in the `metrics` page under the admin port like any other
 
 ## Maven
 
-The library is available at the maven central, so just add depedency to `pom.xml`:
+The library is available at the maven central, so just add dependency to `pom.xml`:
 
 ```xml
 <dependencies>
