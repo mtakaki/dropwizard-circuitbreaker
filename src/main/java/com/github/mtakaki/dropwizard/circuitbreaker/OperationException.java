@@ -18,6 +18,10 @@ public class OperationException extends Exception {
         super(exception);
     }
 
+    /**
+     * Empty constructor used when we don't have any message or we're not
+     * wrapping any exception.
+     */
     public OperationException() {
     }
 }
