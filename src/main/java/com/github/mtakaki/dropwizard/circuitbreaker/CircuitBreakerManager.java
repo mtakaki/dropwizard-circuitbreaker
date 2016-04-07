@@ -24,7 +24,7 @@ public class CircuitBreakerManager {
     /**
      * The rate used to determine if the circuit is opened or not.
      */
-    public static enum RateType {
+    public enum RateType {
         MEAN, ONE_MINUTE, FIVE_MINUTES, FIFTEEN_MINUTES;
     }
 
@@ -33,8 +33,9 @@ public class CircuitBreakerManager {
      * and will catch any exception. In case of an exception, it will increase
      * the meter and, eventually, can cause the circuit to open.
      */
+    @FunctionalInterface
     public static interface Operation {
-        public void accept(final Meter meter) throws Exception;
+        public void accept(final Meter meter) throws OperationException;
     }
 
     private final ConcurrentHashMap<String, Meter> circuitBreakerMap;
@@ -93,10 +94,10 @@ public class CircuitBreakerManager {
      *            The circuit name.
      * @param codeBlock
      *            The code block that will be executed.
-     * @throws Exception
+     * @throws OperationException
      *             The exception thrown from the given code block.
      */
-    public void wrapCodeBlock(final String name, final Operation codeBlock) throws Exception {
+    public void wrapCodeBlock(final String name, final Operation codeBlock) throws OperationException {
         final Meter exceptionMeter = this.getMeter(name);
 
         try {
@@ -120,11 +121,11 @@ public class CircuitBreakerManager {
      * @throws CircuitBreakerOpenedException
      *             Thrown if the circuit breaker is opened and the block can't
      *             be executed.
-     * @throws Exception
+     * @throws OperationException
      *             The exception thrown from the given code block.
      */
     public void wrapCodeBlockWithCircuitBreaker(final String name, final Operation codeBlock)
-            throws CircuitBreakerOpenedException, Exception {
+            throws CircuitBreakerOpenedException, OperationException {
         if (this.isCircuitOpen(name)) {
             throw new CircuitBreakerOpenedException(name);
         }
