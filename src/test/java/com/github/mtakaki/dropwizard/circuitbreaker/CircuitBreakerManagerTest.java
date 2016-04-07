@@ -20,8 +20,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
-import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerOpenedException;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateType;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -189,7 +187,7 @@ public class CircuitBreakerManagerTest {
 
         try {
             this.circuitBreaker.wrapCodeBlock(METER_NAME, (currentMeter) -> {
-                throw new Exception();
+                throw new OperationException();
             });
         } catch (final Exception e) {
         }
@@ -211,7 +209,7 @@ public class CircuitBreakerManagerTest {
         for (int i = 0; i < 10; i++) {
             try {
                 this.circuitBreaker.wrapCodeBlock(METER_NAME, (currentMeter) -> {
-                    throw new Exception();
+                    throw new OperationException();
                 });
             } catch (final Exception e) {
             }
@@ -238,7 +236,7 @@ public class CircuitBreakerManagerTest {
         for (int i = 0; i < 2; i++) {
             try {
                 this.circuitBreaker.wrapCodeBlock(METER_NAME, (currentMeter) -> {
-                    throw new Exception();
+                    throw new OperationException();
                 });
             } catch (final Exception e) {
             }
@@ -298,7 +296,7 @@ public class CircuitBreakerManagerTest {
         for (int i = 0; i < 2; i++) {
             try {
                 this.circuitBreaker.wrapCodeBlockWithCircuitBreaker(METER_NAME, (currentMeter) -> {
-                    throw new Exception();
+                    throw new OperationException();
                 });
             } catch (final Exception e) {
             }

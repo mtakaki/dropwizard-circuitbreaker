@@ -50,7 +50,7 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
             final Optional<String> circuitName = CircuitBreakerApplicationEventListener
                     .getCircuitBreakerName(event.getUriInfo().getMatchedResourceMethod());
 
-            circuitName.ifPresent((actualCircuitName) -> {
+            circuitName.ifPresent(actualCircuitName -> {
                 if (event.getType() == RequestEvent.Type.RESOURCE_METHOD_START
                         && this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
                     this.meterMap.get(actualCircuitName + OPEN_CIRCUIT_SUFFIX).mark();
