@@ -19,7 +19,7 @@ These are the supported versions of dropwizard:
 | Dropwizard  |  Circuit Breaker |
 |---|---|
 | 0.8.X  | 0.0.2  |
-| 0.9.X  | 0.0.4  |
+| 0.9.X  | 0.0.5  |
 
 ## Stand-alone
 
@@ -32,7 +32,7 @@ CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry,
 // When this exception below is thrown, the meter will be increased.
 circuitBreaker.wrapCodeBlockWithCircuitBreaker("my.test.block", (meter) -> {
     // This is where you should put your code.
-    throw new Exception("We failed...");
+    throw new OpeartionException("We failed...");
 });
 ```
 
@@ -45,7 +45,7 @@ if (!circuitBreaker.isCircuitOpen("my.test.block")) {
     // This method will not throw an exception if our circuit is open.
     circuitBreaker.wrapCodeBlock("my.test.block", (meter) -> {
         // This is where you should put your code.
-        throw new Exception("We failed...");
+        throw new OperationException("We failed...");
     });
 }
 ```
