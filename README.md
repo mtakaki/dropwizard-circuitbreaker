@@ -32,7 +32,7 @@ CircuitBreakerManager circuitBreaker = new CircuitBreakerManager(metricRegistry,
 // When this exception below is thrown, the meter will be increased.
 circuitBreaker.wrapCodeBlockWithCircuitBreaker("my.test.block", (meter) -> {
     // This is where you should put your code.
-    throw new OpeartionException("We failed...");
+
 });
 ```
 
@@ -45,7 +45,7 @@ if (!circuitBreaker.isCircuitOpen("my.test.block")) {
     // This method will not throw an exception if our circuit is open.
     circuitBreaker.wrapCodeBlock("my.test.block", (meter) -> {
         // This is where you should put your code.
-        throw new OperationException("We failed...");
+
     });
 }
 ```
@@ -158,7 +158,7 @@ The library is available at the maven central, so just add dependency to `pom.xm
   <dependency>
     <groupId>com.github.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
   </dependency>
 </dependencies>
 ```
