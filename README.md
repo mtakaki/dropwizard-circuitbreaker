@@ -163,3 +163,42 @@ The library is available at the maven central, so just add dependency to `pom.xm
   </dependency>
 </dependencies>
 ```
+
+## Benchmark
+
+Benchmark tests were executed to assess if there is any cost of running an API with the circuit breaker always verifying if the circuit is open, before piping the request through. These tests were executed with these specs:
+
+- 30 concurrent clients
+- 2,000 requests
+
+On average, **without** circuit breaker the benchmark test reached **182.48 requests/second**. While **with** circuit breaker it reached **174.62 requests/second**.
+
+### Failing API
+
+With a constantly failing API, when using the circuit breaker it got **91.85 requests/second**, while without using the circuit breaker it got **100.05 requests/second**. On the other hand, out of the 2,000 requests, 1,537 requests returned `503 Service Unavailable` status.
+
+The metric `CircuitBreakerApplicationEventListener.getCircuitBreakerName` shows how much overhead the circuit breaker adds to the requests. The average overhead, during these tests, were way below 1ms per request.
+
+```json
+  "timers" : {
+    "com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerApplicationEventListener.getCircuitBreakerName" : {
+      "count" : 14015,
+      "max" : 0.0022909980000000003,
+      "mean" : 7.698134370330946E-6,
+      "min" : 5.02E-7,
+      "p50" : 2.8780000000000002E-6,
+      "p75" : 5.5590000000000005E-6,
+      "p95" : 1.4885E-5,
+      "p98" : 1.7873E-5,
+      "p99" : 2.6632000000000002E-5,
+      "p999" : 0.0010906680000000001,
+      "stddev" : 7.534436170053191E-5,
+      "m15_rate" : 15.14910020492228,
+      "m1_rate" : 19.384471789207492,
+      "m5_rate" : 29.113163918240325,
+      "mean_rate" : 31.783145076065363,
+      "duration_units" : "seconds",
+      "rate_units" : "calls/second"
+    }
+}
+```
