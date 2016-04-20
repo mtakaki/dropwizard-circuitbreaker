@@ -55,6 +55,7 @@ public abstract class CircuitBreakerBundle<T extends Configuration> implements C
 
     @Override
     public void initialize(final Bootstrap<?> bootstrap) {
+        // There is nothing to do at this point.
     }
 
     /**
