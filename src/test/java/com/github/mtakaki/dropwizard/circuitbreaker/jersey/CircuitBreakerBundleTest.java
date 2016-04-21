@@ -60,6 +60,6 @@ public class CircuitBreakerBundleTest {
 
         final CircuitBreakerManager manager = this.bundle.getCircuitBreakerManager();
         assertThat(manager.getRateType()).isEqualTo(RateType.FIVE_MINUTES);
-        assertThat(manager.getThreshold()).isEqualTo(0.5d);
+        assertThat(manager.getDefaultThreshold()).isEqualTo(0.5d);
     }
 }

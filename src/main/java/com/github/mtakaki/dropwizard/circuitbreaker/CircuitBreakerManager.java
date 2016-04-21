@@ -6,6 +6,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -21,6 +22,17 @@ import lombok.Getter;
  *
  */
 public class CircuitBreakerManager {
+    /**
+     * Holds the {@link Meter} and the threshold. The threshold can either be a
+     * custom threshold or the default one.
+     */
+    @AllArgsConstructor
+    @Getter
+    private static class MeterThreshold {
+        private final Meter meter;
+        private final double threshold;
+    }
+
     /**
      * The rate used to determine if the circuit is opened or not.
      */
@@ -38,10 +50,10 @@ public class CircuitBreakerManager {
         public void accept(final Meter meter) throws OperationException;
     }
 
-    private final ConcurrentHashMap<String, Meter> circuitBreakerMap;
+    private final ConcurrentHashMap<String, MeterThreshold> circuitBreakerMap;
     private final MetricRegistry metricRegistry;
     @Getter
-    private final double threshold;
+    private final double defaultThreshold;
     @Getter
     private final RateType rateType;
 
@@ -49,7 +61,7 @@ public class CircuitBreakerManager {
      * Build a new instance of {@link CircuitBreakerManager}. This instance will
      * be thread-safe, so it should be shared among different threads.
      *
-     * @param threshold
+     * @param defaultThreshold
      *            The threshold that will determine if a circuit should be
      *            opened or not. This threshold unit is requests per second.
      * @param metricRegistry
@@ -59,12 +71,26 @@ public class CircuitBreakerManager {
      *            The rate unit used to determining if the circuit is opened or
      *            not.
      */
-    public CircuitBreakerManager(final MetricRegistry metricRegistry, final double threshold,
+    public CircuitBreakerManager(final MetricRegistry metricRegistry, final double defaultThreshold,
             final RateType rateType) {
         this.circuitBreakerMap = new ConcurrentHashMap<>();
-        this.threshold = threshold;
+        this.defaultThreshold = defaultThreshold;
         this.metricRegistry = metricRegistry;
         this.rateType = rateType;
+    }
+
+    /**
+     * Will retrieve, or build if it doesn't exist yet, the {@link Meter} that
+     * backs the circuit with the given name. If the circuit breaker doesn't
+     * exist yet, it will use the default threshold. If you want to use a custom
+     * threshold, use the other {@code getMeter()} method.
+     *
+     * @param name
+     *            The circuit name.
+     * @return The meter that belongs to the circuit with the given name.
+     */
+    public Meter getMeter(final String name) {
+        return this.getMeter(name, this.defaultThreshold);
     }
 
     /**
@@ -73,17 +99,21 @@ public class CircuitBreakerManager {
      *
      * @param name
      *            The circuit name.
+     * @param threshold
+     *            The circuit breaker custom threshold, so it won't use the
+     *            default one.
      * @return The meter that belongs to the circuit with the given name.
      */
-    public Meter getMeter(final String name) {
-        Meter meter = this.circuitBreakerMap.get(name);
+    public Meter getMeter(final String name, final double threshold) {
+        MeterThreshold meterThreshold = this.circuitBreakerMap.get(name);
 
-        if (meter == null) {
-            meter = this.metricRegistry.meter(name);
-            this.circuitBreakerMap.put(name, meter);
+        if (meterThreshold == null) {
+            final Meter meter = this.metricRegistry.meter(name);
+            meterThreshold = new MeterThreshold(meter, threshold);
+            this.circuitBreakerMap.put(name, meterThreshold);
         }
 
-        return meter;
+        return meterThreshold.getMeter();
     }
 
     /**
@@ -97,7 +127,8 @@ public class CircuitBreakerManager {
      * @throws OperationException
      *             The exception thrown from the given code block.
      */
-    public void wrapCodeBlock(final String name, final Operation codeBlock) throws OperationException {
+    public void wrapCodeBlock(final String name, final Operation codeBlock)
+            throws OperationException {
         final Meter exceptionMeter = this.getMeter(name);
 
         try {
@@ -148,13 +179,13 @@ public class CircuitBreakerManager {
 
         switch (this.rateType) {
         case MEAN:
-            return exceptionMeter.getMeanRate() >= this.threshold;
+            return exceptionMeter.getMeanRate() >= this.defaultThreshold;
         case ONE_MINUTE:
-            return exceptionMeter.getOneMinuteRate() >= this.threshold;
+            return exceptionMeter.getOneMinuteRate() >= this.defaultThreshold;
         case FIVE_MINUTES:
-            return exceptionMeter.getFiveMinuteRate() >= this.threshold;
+            return exceptionMeter.getFiveMinuteRate() >= this.defaultThreshold;
         case FIFTEEN_MINUTES:
-            return exceptionMeter.getFifteenMinuteRate() >= this.threshold;
+            return exceptionMeter.getFifteenMinuteRate() >= this.defaultThreshold;
         default:
             return false;
         }

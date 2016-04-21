@@ -21,9 +21,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerBundle;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerConfiguration;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
@@ -49,6 +46,13 @@ public class CircuitBreakerBundleIntegrationTest {
         public Response get() throws Exception {
             throw new Exception("We want this to fail");
         }
+
+        @GET
+        @Path("/custom")
+        @CircuitBreaker(threshold = 0.2d, name = "customName")
+        public Response getCustom() throws Exception {
+            throw new Exception("We want this to fail");
+        }
     }
 
     @Getter
@@ -71,17 +75,22 @@ public class CircuitBreakerBundleIntegrationTest {
                 // Verifying that our configuration was properly parsed.
                 assertThat(circuitBreakerConfiguration.getRateType())
                         .isSameAs(CircuitBreakerManager.RateType.ONE_MINUTE);
-                assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5);
+                assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5d);
 
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
                 circuitBreakerManager.set(circuitBreaker);
+                when(circuitBreaker.getDefaultThreshold()).thenReturn(0.5d);
 
                 // Creating the mock Meter that is marked only when there are
                 // exceptions and the circuit is not open.
                 final Meter meter = mock(Meter.class);
                 CircuitBreakerBundleIntegrationTest.meter.set(meter);
 
-                when(circuitBreaker.getMeter(METER_NAME)).thenReturn(meter);
+                when(circuitBreaker.getMeter(METER_NAME, 0.5d)).thenReturn(meter);
+
+                final Meter customMeter = mock(Meter.class);
+                CircuitBreakerBundleIntegrationTest.customMeter.set(customMeter);
+                when(circuitBreaker.getMeter("customName", 0.2d)).thenReturn(customMeter);
 
                 CircuitBreakerBundleIntegrationTest.metricRegistry.set(environment.metrics());
 
@@ -109,6 +118,7 @@ public class CircuitBreakerBundleIntegrationTest {
 
     public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
     public static ThreadLocal<Meter> meter = new ThreadLocal<>();
+    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
     public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Before

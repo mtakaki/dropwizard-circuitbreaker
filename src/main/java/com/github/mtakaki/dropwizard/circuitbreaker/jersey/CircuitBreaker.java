@@ -19,4 +19,6 @@ import java.lang.annotation.Target;
 @Documented
 public @interface CircuitBreaker {
     String name() default "";
+
+    double threshold() default 0d;
 }

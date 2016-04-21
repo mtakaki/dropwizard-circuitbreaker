@@ -26,7 +26,8 @@ import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateTy
 public class CircuitBreakerManagerTest {
     private static final String METER_NAME = "test.meter";
     // 1 request per second.
-    private static double DEFAULT_THRESHOLD = 2D;
+    private static final double DEFAULT_THRESHOLD = 2D;
+    private static final double CUSTOM_THRESHOLD = 3D;
 
     private CircuitBreakerManager circuitBreaker;
 
@@ -58,6 +59,19 @@ public class CircuitBreakerManagerTest {
 
         assertThat(sameMeter).isNotNull().isEqualTo(meter);
         assertThat(sameMeter.getCount()).isEqualTo(0L);
+    }
+
+    /**
+     * Testing {@code getMeter()} will build a new {@link Meter} the first time
+     * the name is passed to it. We can't really easily test that the custom
+     * threshold is actually set.
+     */
+    @Test
+    public void testGetMeterWithCustomThreshold() {
+        final Meter meter = this.circuitBreaker.getMeter(METER_NAME, CUSTOM_THRESHOLD);
+
+        assertThat(meter).isNotNull();
+        assertThat(meter.getCount()).isEqualTo(0L);
     }
 
     /**

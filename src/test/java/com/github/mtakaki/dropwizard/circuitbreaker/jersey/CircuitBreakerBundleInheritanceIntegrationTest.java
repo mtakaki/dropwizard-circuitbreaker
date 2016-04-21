@@ -21,9 +21,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreaker;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerBundle;
-import com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerConfiguration;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
@@ -52,6 +49,12 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
 
     @Path("/test")
     public static class TestResource extends ParentResource {
+        @GET
+        @Path("/custom")
+        @CircuitBreaker(threshold = 0.2d, name = "customName")
+        public Response getCustom() throws Exception {
+            throw new Exception("We want this to fail");
+        }
     }
 
     @Getter
@@ -78,13 +81,18 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
 
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
                 circuitBreakerManager.set(circuitBreaker);
+                when(circuitBreaker.getDefaultThreshold()).thenReturn(0.5d);
 
                 // Creating the mock Meter that is marked only when there are
                 // exceptions and the circuit is not open.
                 final Meter meter = mock(Meter.class);
                 CircuitBreakerBundleInheritanceIntegrationTest.meter.set(meter);
 
-                when(circuitBreaker.getMeter(METER_NAME)).thenReturn(meter);
+                when(circuitBreaker.getMeter(METER_NAME, 0.5d)).thenReturn(meter);
+
+                final Meter customMeter = mock(Meter.class);
+                CircuitBreakerBundleInheritanceIntegrationTest.customMeter.set(customMeter);
+                when(circuitBreaker.getMeter("customName", 0.2d)).thenReturn(customMeter);
 
                 CircuitBreakerBundleInheritanceIntegrationTest.metricRegistry
                         .set(environment.metrics());
@@ -113,6 +121,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
 
     public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
     public static ThreadLocal<Meter> meter = new ThreadLocal<>();
+    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
     public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Before
@@ -138,10 +147,25 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We wanted this request to fail.
-        this.sendGetRequestAndVerifyStatus(500);
+        this.sendGetRequestAndVerifyStatus("/test", 500);
 
         // Verifying the meter was called once the exception happened.
         verify(meter.get(), only()).mark();
+        // The count of our open circuit meter should be the same.
+        assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
+    }
+
+    @Test
+    public void testCustomMeterCountIsIncremented() {
+        when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
+        final Meter openCircuitMeter = metricRegistry.get().meter("custom.openCircuit");
+        final long beforeOpenCircuitCount = openCircuitMeter.getCount();
+
+        // We wanted this request to fail.
+        this.sendGetRequestAndVerifyStatus("/test/custom", 500);
+
+        // Verifying the meter was called once the exception happened.
+        verify(customMeter.get(), only()).mark();
         // The count of our open circuit meter should be the same.
         assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
     }
@@ -156,7 +180,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
-        this.sendGetRequestAndVerifyStatus(503);
+        this.sendGetRequestAndVerifyStatus("/test", 503);
 
         // Verifying the meter was not called because the circuit was opened.
         verify(meter.get(), times(0)).mark();
@@ -175,7 +199,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
-        this.sendGetRequestAndVerifyStatus(503);
+        this.sendGetRequestAndVerifyStatus("/test", 503);
 
         // Verifying the meter was not called because the circuit was opened.
         verify(meter.get(), times(0)).mark();
@@ -186,7 +210,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(false);
 
         // We should get 500 again.
-        this.sendGetRequestAndVerifyStatus(500);
+        this.sendGetRequestAndVerifyStatus("/test", 500);
 
         // Verifying the meter was called only once as the the first time the
         // circuit was opened.
@@ -202,9 +226,9 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
      * @param httpStatus
      *            The expected status code.
      */
-    private void sendGetRequestAndVerifyStatus(final int httpStatus) {
+    private void sendGetRequestAndVerifyStatus(final String path, final int httpStatus) {
         final Response response = client.target(
-                String.format("http://localhost:%d/test/", this.RULE.getLocalPort()))
+                String.format("http://localhost:%d%s", this.RULE.getLocalPort(), path))
                 .request().get();
 
         assertThat(response.getStatus()).isEqualTo(httpStatus);

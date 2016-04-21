@@ -2,6 +2,7 @@ package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -12,7 +13,6 @@ import javax.ws.rs.ext.Provider;
 
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.model.Invocable;
-import org.glassfish.jersey.server.model.Resource;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
@@ -50,28 +50,40 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
 
         @Override
         public void onEvent(final RequestEvent event) {
-            final Optional<String> circuitName = this.eventListener
-                    .getCircuitBreakerName(event.getUriInfo().getMatchedResourceMethod());
-
-            circuitName.ifPresent(actualCircuitName -> {
-                if (event.getType() == RequestEvent.Type.RESOURCE_METHOD_START
-                        && this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
-                    this.meterMap.get(actualCircuitName + OPEN_CIRCUIT_SUFFIX).mark();
-                    log.warn("Circuit breaker open, returning 503 Service Unavailable: "
-                            + actualCircuitName + OPEN_CIRCUIT_SUFFIX);
-                    throw new WebApplicationException(Response.Status.SERVICE_UNAVAILABLE);
-                } else if (event.getType() == RequestEvent.Type.ON_EXCEPTION
-                        && !this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
-                    this.meterMap.get(actualCircuitName).mark();
-                }
-            });
+            switch (event.getType()) {
+            case RESOURCE_METHOD_START:
+                this.eventListener
+                        .getCircuitBreakerName(event.getUriInfo().getMatchedResourceMethod())
+                        .ifPresent(actualCircuitName -> {
+                            if (this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
+                                this.meterMap.get(actualCircuitName + OPEN_CIRCUIT_SUFFIX).mark();
+                                log.warn("Circuit breaker open, returning 503 Service Unavailable: "
+                                        + actualCircuitName + OPEN_CIRCUIT_SUFFIX);
+                                throw new WebApplicationException(
+                                        Response.Status.SERVICE_UNAVAILABLE);
+                            }
+                        });
+                break;
+            case ON_EXCEPTION:
+                this.eventListener
+                        .getCircuitBreakerName(event.getUriInfo().getMatchedResourceMethod())
+                        .ifPresent(actualCircuitName -> {
+                            if (!this.circuitBreakerManager.isCircuitOpen(actualCircuitName)) {
+                                this.meterMap.get(actualCircuitName).mark();
+                            }
+                        });
+                break;
+            default:
+                break;
+            }
         }
     }
 
+    private final ConcurrentMap<String, Meter> meterMap = new ConcurrentHashMap<>();
     private final MetricRegistry metricRegistry;
     private final CircuitBreakerManager circuitBreaker;
-    private final ConcurrentMap<String, Meter> meterMap = new ConcurrentHashMap<>();
     private final Timer requestOverheadTimer;
+    private final double defaultThreshold;
 
     CircuitBreakerApplicationEventListener(final MetricRegistry metricRegistry,
             final CircuitBreakerManager circuitBreaker) {
@@ -79,18 +91,21 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
         this.circuitBreaker = circuitBreaker;
         this.requestOverheadTimer = metricRegistry.timer(MetricRegistry
                 .name(CircuitBreakerApplicationEventListener.class, "getCircuitBreakerName"));
+        this.defaultThreshold = circuitBreaker.getDefaultThreshold();
     }
 
     @Override
     public void onEvent(final ApplicationEvent event) {
         if (event.getType() == ApplicationEvent.Type.INITIALIZATION_APP_FINISHED) {
-            for (final Resource resource : event.getResourceModel().getResources()) {
-                this.registerCircuitBreakerAnnotations(resource.getAllMethods());
+            event.getResourceModel().getResources().parallelStream()
+                    .filter(Objects::nonNull)
+                    .forEach(resource -> {
+                        this.registerCircuitBreakerAnnotations(resource.getAllMethods());
 
-                for (final Resource childResource : resource.getChildResources()) {
-                    this.registerCircuitBreakerAnnotations(childResource.getAllMethods());
-                }
-            }
+                        resource.getChildResources().parallelStream().forEach(childResource -> {
+                            this.registerCircuitBreakerAnnotations(childResource.getAllMethods());
+                        });
+                    });
         }
     }
 
@@ -103,20 +118,22 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
      *            failures.
      */
     private void registerCircuitBreakerAnnotations(final List<ResourceMethod> resourceMethods) {
-        for (final ResourceMethod resourceMethod : resourceMethods) {
-            this.registerCircuitBreakerAnnotations(resourceMethod);
-        }
-    }
+        resourceMethods.parallelStream()
+                .filter(Objects::nonNull)
+                .forEach(resourceMethod -> {
+                    this.getCircuitBreakerName(resourceMethod)
+                            .ifPresent(actualCircuitName -> {
+                                this.meterMap.put(actualCircuitName,
+                                        this.circuitBreaker.getMeter(
+                                                actualCircuitName,
+                                                this.getThreshold(resourceMethod)));
 
-    private void registerCircuitBreakerAnnotations(final ResourceMethod resourceMethod) {
-        final Optional<String> circuitName = this.getCircuitBreakerName(resourceMethod);
-
-        if (circuitName.isPresent()) {
-            final String actualCircuitName = circuitName.get();
-            this.meterMap.put(actualCircuitName, this.circuitBreaker.getMeter(actualCircuitName));
-            this.meterMap.put(actualCircuitName + OPEN_CIRCUIT_SUFFIX,
-                    this.metricRegistry.meter(actualCircuitName + OPEN_CIRCUIT_SUFFIX));
-        }
+                                final String openCircuitName = new StringBuilder(actualCircuitName)
+                                        .append(OPEN_CIRCUIT_SUFFIX).toString();
+                                this.meterMap.put(openCircuitName,
+                                        this.metricRegistry.meter(openCircuitName));
+                            });
+                });
     }
 
     /**
@@ -131,10 +148,6 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
      *         {@code Optional.empty()} if it's not annotated.
      */
     private Optional<String> getCircuitBreakerName(final ResourceMethod resourceMethod) {
-        if (resourceMethod == null) {
-            return Optional.empty();
-        }
-
         try (Timer.Context context = this.requestOverheadTimer.time()) {
             final Invocable invocable = resourceMethod.getInvocable();
             Method method = invocable.getDefinitionMethod();
@@ -152,6 +165,25 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
             } else {
                 return Optional.empty();
             }
+        }
+    }
+
+    private double getThreshold(final ResourceMethod resourceMethod) {
+        final Invocable invocable = resourceMethod.getInvocable();
+        Method method = invocable.getDefinitionMethod();
+        CircuitBreaker circuitBreaker = method.getAnnotation(CircuitBreaker.class);
+
+        // In case it's a child class with a parent method annotated.
+        if (circuitBreaker == null) {
+            method = invocable.getHandlingMethod();
+            circuitBreaker = method.getAnnotation(CircuitBreaker.class);
+        }
+
+        if (circuitBreaker != null) {
+            final double customThreshold = circuitBreaker.threshold();
+            return customThreshold > 0d ? customThreshold : this.defaultThreshold;
+        } else {
+            return this.defaultThreshold;
         }
     }
 
