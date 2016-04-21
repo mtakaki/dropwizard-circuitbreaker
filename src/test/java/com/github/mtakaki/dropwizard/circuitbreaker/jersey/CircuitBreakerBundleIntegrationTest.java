@@ -144,10 +144,25 @@ public class CircuitBreakerBundleIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We wanted this request to fail.
-        this.sendGetRequestAndVerifyStatus(500);
+        this.sendGetRequestAndVerifyStatus("/test", 500);
 
         // Verifying the meter was called once the exception happened.
         verify(meter.get(), only()).mark();
+        // The count of our open circuit meter should be the same.
+        assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
+    }
+
+    @Test
+    public void testCustomMeterCountIsIncremented() {
+        when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
+        final Meter openCircuitMeter = metricRegistry.get().meter("custom.openCircuit");
+        final long beforeOpenCircuitCount = openCircuitMeter.getCount();
+
+        // We wanted this request to fail.
+        this.sendGetRequestAndVerifyStatus("/test/custom", 500);
+
+        // Verifying the meter was called once the exception happened.
+        verify(customMeter.get(), only()).mark();
         // The count of our open circuit meter should be the same.
         assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
     }
@@ -162,7 +177,7 @@ public class CircuitBreakerBundleIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
-        this.sendGetRequestAndVerifyStatus(503);
+        this.sendGetRequestAndVerifyStatus("/test", 503);
 
         // Verifying the meter was not called because the circuit was opened.
         verify(meter.get(), times(0)).mark();
@@ -181,7 +196,7 @@ public class CircuitBreakerBundleIntegrationTest {
         final long beforeOpenCircuitCount = openCircuitMeter.getCount();
 
         // We should get 503 - Service unavailable.
-        this.sendGetRequestAndVerifyStatus(503);
+        this.sendGetRequestAndVerifyStatus("/test", 503);
         // The count of our open circuit meter should have increased.
         final long afterOpenCircuitCount = openCircuitMeter.getCount();
         assertThat(afterOpenCircuitCount).isGreaterThan(beforeOpenCircuitCount);
@@ -192,7 +207,7 @@ public class CircuitBreakerBundleIntegrationTest {
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(false);
 
         // We should get 500 again.
-        this.sendGetRequestAndVerifyStatus(500);
+        this.sendGetRequestAndVerifyStatus("/test", 500);
 
         // Verifying the meter was called only once as the the first time the
         // circuit was opened.
@@ -208,9 +223,9 @@ public class CircuitBreakerBundleIntegrationTest {
      * @param httpStatus
      *            The expected status code.
      */
-    private void sendGetRequestAndVerifyStatus(final int httpStatus) {
+    private void sendGetRequestAndVerifyStatus(final String path, final int httpStatus) {
         final Response response = client.target(
-                String.format("http://localhost:%d/test/", this.RULE.getLocalPort()))
+                String.format("http://localhost:%d%s", this.RULE.getLocalPort(), path))
                 .request().get();
 
         assertThat(response.getStatus()).isEqualTo(httpStatus);
