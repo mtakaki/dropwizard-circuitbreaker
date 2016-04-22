@@ -7,6 +7,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
@@ -51,7 +54,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
     public static class TestResource extends ParentResource {
         @GET
         @Path("/custom")
-        @CircuitBreaker(threshold = 0.2d, name = "customName")
+        @CircuitBreaker(name = "customName")
         public Response getCustom() throws Exception {
             throw new Exception("We want this to fail");
         }
@@ -78,6 +81,11 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
                 assertThat(circuitBreakerConfiguration.getRateType())
                         .isSameAs(CircuitBreakerManager.RateType.ONE_MINUTE);
                 assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5);
+
+                final Map<String, Double> customThreshold = new HashMap<>();
+                customThreshold.put("customName", 0.2d);
+                assertThat(circuitBreakerConfiguration.getCustomThresholds())
+                        .containsAllEntriesOf(customThreshold);
 
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
                 circuitBreakerManager.set(circuitBreaker);

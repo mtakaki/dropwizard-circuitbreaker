@@ -75,12 +75,14 @@ public class MyAppConfiguration extends Configuration {
 }
 ``` 
 
-Your configuration YML will look like this:
+Your configuration YML will look like this. The `customThresholds` allows having custom thresholds for specific circuit breakers.
 
 ```yaml
 circuitBreaker:
   threshold: 0.5
   rateType: ONE_MINUTE
+  customThresholds:
+    com.mtakaki.testcb.TestResource.get.circuitBreaker: 0.2
 ```
 
 To register the bundle in the application:
@@ -120,6 +122,13 @@ public class TestResource {
     @GET
     @CircuitBreaker
     public Response get() throws Exception {
+        throw new Exception("We want this to fail");
+    }
+
+    @GET
+    @Path("/custom")
+    @CircuitBreaker(name = "customName")
+    public Response getCustom() throws Exception {
         throw new Exception("We want this to fail");
     }
 }

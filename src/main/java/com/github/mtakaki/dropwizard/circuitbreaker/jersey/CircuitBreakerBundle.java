@@ -32,7 +32,8 @@ public abstract class CircuitBreakerBundle<T extends Configuration> implements C
                 circuitBreakerConfiguration);
         environment.jersey()
                 .register(new CircuitBreakerApplicationEventListener(environment.metrics(),
-                        this.circuitBreakerManager));
+                        this.circuitBreakerManager,
+                        circuitBreakerConfiguration.getCustomThresholds()));
     }
 
     /**

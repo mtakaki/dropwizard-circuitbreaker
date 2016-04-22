@@ -2,6 +2,7 @@ package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,14 +85,17 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
     private final CircuitBreakerManager circuitBreaker;
     private final Timer requestOverheadTimer;
     private final double defaultThreshold;
+    private final Map<String, Double> customThresholds;
 
     CircuitBreakerApplicationEventListener(final MetricRegistry metricRegistry,
-            final CircuitBreakerManager circuitBreaker) {
+            final CircuitBreakerManager circuitBreaker,
+            final Map<String, Double> customThresholds) {
         this.metricRegistry = metricRegistry;
         this.circuitBreaker = circuitBreaker;
         this.requestOverheadTimer = metricRegistry.timer(MetricRegistry
                 .name(CircuitBreakerApplicationEventListener.class, "getCircuitBreakerName"));
         this.defaultThreshold = circuitBreaker.getDefaultThreshold();
+        this.customThresholds = customThresholds;
     }
 
     @Override
@@ -129,7 +133,10 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
                                 this.meterMap.put(actualCircuitName,
                                         this.circuitBreaker.getMeter(
                                                 actualCircuitName,
-                                                this.getThreshold(resourceMethod)));
+                                                this.customThresholds.containsKey(actualCircuitName)
+                                                        ? this.customThresholds
+                                                                .get(actualCircuitName)
+                                                        : this.defaultThreshold));
 
                                 final String openCircuitName = new StringBuilder(actualCircuitName)
                                         .append(OPEN_CIRCUIT_SUFFIX).toString();
@@ -168,38 +175,6 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
             } else {
                 return Optional.empty();
             }
-        }
-    }
-
-    /**
-     * Retrieves the circuit breaker threshold. If the annotation has a custom
-     * threshold it will be used, otherwise it will use the default one. This
-     * method is only called when registering the resources and it's never used
-     * when a request comes through.
-     *
-     * @param resourceMethod
-     *            The method that may contain a {@link CircuitBreaker}
-     *            annotation and will be monitored.
-     * @return The circuit breaker threshold, that could be a custom one or the
-     *         default.
-     */
-    private double getThreshold(final ResourceMethod resourceMethod) {
-        final Invocable invocable = resourceMethod.getInvocable();
-        Method method = invocable.getDefinitionMethod();
-        CircuitBreaker circuitBreaker = method.getAnnotation(CircuitBreaker.class);
-
-        // In case it's a child class with a parent method annotated.
-        if (circuitBreaker == null) {
-            method = invocable.getHandlingMethod();
-            circuitBreaker = method.getAnnotation(CircuitBreaker.class);
-        }
-
-        if (circuitBreaker != null) {
-            final double customThreshold = circuitBreaker.threshold();
-            return Double.compare(customThreshold, 0d) > 0 ? customThreshold
-                    : this.defaultThreshold;
-        } else {
-            return this.defaultThreshold;
         }
     }
 
