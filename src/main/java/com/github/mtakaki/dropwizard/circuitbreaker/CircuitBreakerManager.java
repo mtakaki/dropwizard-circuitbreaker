@@ -167,6 +167,9 @@ public class CircuitBreakerManager {
     /**
      * Verifies if the circuit is opened for a given circuit name. It will use
      * the given {@link RateType} to determine if the circuit is opened or not.
+     * If the meter has not been previously created, it will create it using the
+     * default threshold. To make sure it uses the correct threshold, call
+     * {@code getMeter()} before-hand.
      *
      * @param name
      *            The circuit name.
