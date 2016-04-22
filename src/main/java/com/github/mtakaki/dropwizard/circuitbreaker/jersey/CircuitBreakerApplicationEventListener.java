@@ -102,9 +102,12 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
                     .forEach(resource -> {
                         this.registerCircuitBreakerAnnotations(resource.getAllMethods());
 
-                        resource.getChildResources().parallelStream().forEach(childResource -> {
-                            this.registerCircuitBreakerAnnotations(childResource.getAllMethods());
-                        });
+                        resource.getChildResources().parallelStream()
+                                .filter(Objects::nonNull)
+                                .forEach(childResource -> {
+                                    this.registerCircuitBreakerAnnotations(
+                                            childResource.getAllMethods());
+                                });
                     });
         }
     }
@@ -142,7 +145,7 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
      * {@link CircuitBreaker} it will return {@code Optional.empty()}.
      *
      * @param resourceMethod
-     *            The method that may contain a {@linkplain CircuitBreaker}
+     *            The method that may contain a {@link CircuitBreaker}
      *            annotation and will be monitored.
      * @return An Optional of the circuit breaker name or
      *         {@code Optional.empty()} if it's not annotated.
@@ -168,6 +171,18 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
         }
     }
 
+    /**
+     * Retrieves the circuit breaker threshold. If the annotation has a custom
+     * threshold it will be used, otherwise it will use the default one. This
+     * method is only called when registering the resources and it's never used
+     * when a request comes through.
+     *
+     * @param resourceMethod
+     *            The method that may contain a {@link CircuitBreaker}
+     *            annotation and will be monitored.
+     * @return The circuit breaker threshold, that could be a custom one or the
+     *         default.
+     */
     private double getThreshold(final ResourceMethod resourceMethod) {
         final Invocable invocable = resourceMethod.getInvocable();
         Method method = invocable.getDefinitionMethod();
@@ -181,7 +196,8 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
 
         if (circuitBreaker != null) {
             final double customThreshold = circuitBreaker.threshold();
-            return customThreshold > 0d ? customThreshold : this.defaultThreshold;
+            return Double.compare(customThreshold, 0d) > 0 ? customThreshold
+                    : this.defaultThreshold;
         } else {
             return this.defaultThreshold;
         }
