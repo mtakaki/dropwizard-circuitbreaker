@@ -7,9 +7,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
@@ -37,21 +34,19 @@ import io.dropwizard.util.Duration;
 
 import lombok.Getter;
 
-public class CircuitBreakerBundleInheritanceIntegrationTest {
-    private static final String METER_NAME = CircuitBreakerBundleInheritanceIntegrationTest.TestResource.class
+public class CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest {
+    private static final String METER_NAME = CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.TestResource.class
             .getTypeName() + ".get.circuitBreaker";
     private static final String OPEN_CIRCUIT_METER_NAME = METER_NAME + ".openCircuit";
 
-    public static class ParentResource {
+    @Path("/test")
+    public static class TestResource {
         @GET
         @CircuitBreaker
         public Response get() throws Exception {
             throw new Exception("We want this to fail");
         }
-    }
 
-    @Path("/test")
-    public static class TestResource extends ParentResource {
         @GET
         @Path("/custom")
         @CircuitBreaker(name = "customName")
@@ -80,12 +75,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
                 // Verifying that our configuration was properly parsed.
                 assertThat(circuitBreakerConfiguration.getRateType())
                         .isSameAs(CircuitBreakerManager.RateType.ONE_MINUTE);
-                assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5);
-
-                final Map<String, Double> customThreshold = new HashMap<>();
-                customThreshold.put("customName", 0.2d);
-                assertThat(circuitBreakerConfiguration.getCustomThresholds())
-                        .containsAllEntriesOf(customThreshold);
+                assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5d);
 
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
                 circuitBreakerManager.set(circuitBreaker);
@@ -94,16 +84,15 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
                 // Creating the mock Meter that is marked only when there are
                 // exceptions and the circuit is not open.
                 final Meter meter = mock(Meter.class);
-                CircuitBreakerBundleInheritanceIntegrationTest.meter.set(meter);
+                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.meter.set(meter);
 
                 when(circuitBreaker.getMeter(METER_NAME, 0.5d)).thenReturn(meter);
 
                 final Meter customMeter = mock(Meter.class);
-                CircuitBreakerBundleInheritanceIntegrationTest.customMeter.set(customMeter);
-                when(circuitBreaker.getMeter("customName", 0.2d)).thenReturn(customMeter);
+                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.customMeter.set(customMeter);
+                when(circuitBreaker.getMeter("customName", 0.5d)).thenReturn(customMeter);
 
-                CircuitBreakerBundleInheritanceIntegrationTest.metricRegistry
-                        .set(environment.metrics());
+                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.metricRegistry.set(environment.metrics());
 
                 return circuitBreaker;
             }
@@ -123,7 +112,7 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
 
     @Rule
     public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
-            TestApplication.class, ResourceHelpers.resourceFilePath("config.yml"));
+            TestApplication.class, ResourceHelpers.resourceFilePath("config_without_custom_circuitbreakers.yml"));
 
     private static Client client;
 
@@ -208,12 +197,12 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
 
         // We should get 503 - Service unavailable.
         this.sendGetRequestAndVerifyStatus("/test", 503);
-
-        // Verifying the meter was not called because the circuit was opened.
-        verify(meter.get(), times(0)).mark();
         // The count of our open circuit meter should have increased.
         final long afterOpenCircuitCount = openCircuitMeter.getCount();
         assertThat(afterOpenCircuitCount).isGreaterThan(beforeOpenCircuitCount);
+
+        // Verifying the meter was not called because the circuit was opened.
+        verify(meter.get(), times(0)).mark();
 
         when(circuitBreakerManager.get().isCircuitOpen(METER_NAME)).thenReturn(false);
 

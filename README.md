@@ -75,12 +75,14 @@ public class MyAppConfiguration extends Configuration {
 }
 ``` 
 
-Your configuration YML will look like this:
+Your configuration YML will look like this. The `customThresholds` allows having custom thresholds for specific circuit breakers.
 
 ```yaml
 circuitBreaker:
   threshold: 0.5
   rateType: ONE_MINUTE
+  customThresholds:
+    com.mtakaki.testcb.TestResource.get.circuitBreaker: 0.2
 ```
 
 To register the bundle in the application:
@@ -120,6 +122,13 @@ public class TestResource {
     @GET
     @CircuitBreaker
     public Response get() throws Exception {
+        throw new Exception("We want this to fail");
+    }
+
+    @GET
+    @Path("/custom")
+    @CircuitBreaker(name = "customName")
+    public Response getCustom() throws Exception {
         throw new Exception("We want this to fail");
     }
 }
@@ -166,37 +175,39 @@ The library is available at the maven central, so just add dependency to `pom.xm
 
 ## Benchmark
 
+**tl;dr**: Circuit breaker is very lean and there's barely any impact on performance.
+
 Benchmark tests were executed to assess if there is any cost of running an API with the circuit breaker always verifying if the circuit is open, before piping the request through. These tests were executed with these specs:
 
 - 30 concurrent clients
 - 2,000 requests
 
-On average, **without** circuit breaker the benchmark test reached **182.48 requests/second**. While **with** circuit breaker it reached **174.62 requests/second**.
+On average, **without** circuit breaker the benchmark test reached **179.97 requests/second**. While **with** circuit breaker it reached **180.77 requests/second**.
 
 ### Failing API
 
-With a constantly failing API, when using the circuit breaker it got **91.85 requests/second**, while without using the circuit breaker it got **100.05 requests/second**. On the other hand, out of the 2,000 requests, 1,537 requests returned `503 Service Unavailable` status.
+With a constantly failing API, when using the circuit breaker it got **97.40 requests/second**, while without using the circuit breaker it got **92.29 requests/second**. On the other hand, out of the 2,000 requests, 1,396 requests returned `503 Service Unavailable` status.
 
 The metric `CircuitBreakerApplicationEventListener.getCircuitBreakerName` shows how much overhead the circuit breaker adds to the requests. The average overhead, during these tests, were way below 1ms per request.
 
 ```json
   "timers" : {
     "com.github.mtakaki.dropwizard.circuitbreaker.jersey.CircuitBreakerApplicationEventListener.getCircuitBreakerName" : {
-      "count" : 14015,
-      "max" : 0.0022909980000000003,
-      "mean" : 7.698134370330946E-6,
-      "min" : 5.02E-7,
-      "p50" : 2.8780000000000002E-6,
-      "p75" : 5.5590000000000005E-6,
-      "p95" : 1.4885E-5,
-      "p98" : 1.7873E-5,
-      "p99" : 2.6632000000000002E-5,
-      "p999" : 0.0010906680000000001,
-      "stddev" : 7.534436170053191E-5,
-      "m15_rate" : 15.14910020492228,
-      "m1_rate" : 19.384471789207492,
-      "m5_rate" : 29.113163918240325,
-      "mean_rate" : 31.783145076065363,
+      "count" : 4015,
+      "max" : 0.001024921,
+      "mean" : 8.349680896258536E-6,
+      "min" : 1.038E-6,
+      "p50" : 4.683E-6,
+      "p75" : 7.406000000000001E-6,
+      "p95" : 1.6315000000000002E-5,
+      "p98" : 2.0050000000000003E-5,
+      "p99" : 2.7683000000000002E-5,
+      "p999" : 6.15457E-4,
+      "stddev" : 3.60241125613854E-5,
+      "m15_rate" : 6.589688969963449,
+      "m1_rate" : 13.102701736894172,
+      "m5_rate" : 11.54464183938005,
+      "mean_rate" : 30.191455659575904,
       "duration_units" : "seconds",
       "rate_units" : "calls/second"
     }

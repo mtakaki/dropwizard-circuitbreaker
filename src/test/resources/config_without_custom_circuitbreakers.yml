@@ -1,8 +1,6 @@
 circuitBreaker:
   threshold: 0.5
   rateType: ONE_MINUTE
-  customThresholds:
-    customName: 0.2
 
 logging:
   level: ERROR
