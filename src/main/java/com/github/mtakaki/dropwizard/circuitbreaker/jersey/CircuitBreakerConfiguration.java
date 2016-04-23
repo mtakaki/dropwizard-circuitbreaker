@@ -1,5 +1,6 @@
 package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
@@ -21,5 +22,5 @@ public class CircuitBreakerConfiguration {
     /**
      * Custom thresholds with circuit breaker name and threshold value.
      */
-    private Map<String, Double> customThresholds;
+    private Map<String, Double> customThresholds = new HashMap<>();
 }

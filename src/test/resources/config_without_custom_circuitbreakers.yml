@@ -1,0 +1,14 @@
+circuitBreaker:
+  threshold: 0.5
+  rateType: ONE_MINUTE
+
+logging:
+  level: ERROR
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 0
+  adminConnectors:
+    - type: http
+      port: 0
