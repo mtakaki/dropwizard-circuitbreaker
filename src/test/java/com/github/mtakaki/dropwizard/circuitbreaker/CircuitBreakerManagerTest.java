@@ -20,7 +20,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CircuitBreakerManagerTest {
@@ -38,9 +37,9 @@ public class CircuitBreakerManagerTest {
     public ExpectedException expectedException = ExpectedException.none();
 
     @Before
-    public void setup() {
+    public void setUp() {
         this.circuitBreaker = new CircuitBreakerManager(this.metricRegistry, DEFAULT_THRESHOLD,
-                CircuitBreakerManager.RateType.MEAN);
+                RateType.MEAN);
     }
 
     /**

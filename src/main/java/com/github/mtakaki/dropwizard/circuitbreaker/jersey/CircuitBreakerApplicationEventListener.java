@@ -43,6 +43,13 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
     private static final String SUFFIX = ".circuitBreaker";
     private static final String OPEN_CIRCUIT_SUFFIX = ".openCircuit";
 
+    private final ConcurrentMap<String, Meter> meterMap = new ConcurrentHashMap<>();
+    private final MetricRegistry metricRegistry;
+    private final CircuitBreakerManager circuitBreaker;
+    private final Timer requestOverheadTimer;
+    private final double defaultThreshold;
+    private final Map<String, Double> customThresholds;
+
     @AllArgsConstructor
     private static class CircuitBreakerEventListener implements RequestEventListener {
         private final CircuitBreakerApplicationEventListener eventListener;
@@ -79,13 +86,6 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
             }
         }
     }
-
-    private final ConcurrentMap<String, Meter> meterMap = new ConcurrentHashMap<>();
-    private final MetricRegistry metricRegistry;
-    private final CircuitBreakerManager circuitBreaker;
-    private final Timer requestOverheadTimer;
-    private final double defaultThreshold;
-    private final Map<String, Double> customThresholds;
 
     CircuitBreakerApplicationEventListener(final MetricRegistry metricRegistry,
             final CircuitBreakerManager circuitBreaker,

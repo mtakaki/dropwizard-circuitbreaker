@@ -24,6 +24,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.RateType;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
@@ -41,6 +42,17 @@ public class CircuitBreakerBundleIntegrationTest {
     private static final String METER_NAME = CircuitBreakerBundleIntegrationTest.TestResource.class
             .getTypeName() + ".get.circuitBreaker";
     private static final String OPEN_CIRCUIT_METER_NAME = METER_NAME + ".openCircuit";
+
+    @Rule
+    public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
+            TestApplication.class, ResourceHelpers.resourceFilePath("config.yml"));
+
+    private static Client client;
+
+    public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
+    public static ThreadLocal<Meter> meter = new ThreadLocal<>();
+    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
+    public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Path("/test")
     public static class TestResource {
@@ -77,7 +89,7 @@ public class CircuitBreakerBundleIntegrationTest {
                     final CircuitBreakerConfiguration circuitBreakerConfiguration) {
                 // Verifying that our configuration was properly parsed.
                 assertThat(circuitBreakerConfiguration.getRateType())
-                        .isSameAs(CircuitBreakerManager.RateType.ONE_MINUTE);
+                        .isSameAs(RateType.ONE_MINUTE);
                 assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5d);
 
                 final Map<String, Double> customThreshold = new HashMap<>();
@@ -117,17 +129,6 @@ public class CircuitBreakerBundleIntegrationTest {
             environment.jersey().register(new TestResource());
         }
     }
-
-    @Rule
-    public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
-            TestApplication.class, ResourceHelpers.resourceFilePath("config.yml"));
-
-    private static Client client;
-
-    public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
-    public static ThreadLocal<Meter> meter = new ThreadLocal<>();
-    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
-    public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Before
     public void setupClient() {

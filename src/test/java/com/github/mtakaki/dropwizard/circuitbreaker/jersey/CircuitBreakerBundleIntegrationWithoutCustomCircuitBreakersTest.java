@@ -21,6 +21,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.RateType;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
@@ -38,6 +39,18 @@ public class CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest {
     private static final String METER_NAME = CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.TestResource.class
             .getTypeName() + ".get.circuitBreaker";
     private static final String OPEN_CIRCUIT_METER_NAME = METER_NAME + ".openCircuit";
+
+    @Rule
+    public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
+            TestApplication.class,
+            ResourceHelpers.resourceFilePath("config_without_custom_circuitbreakers.yml"));
+
+    private static Client client;
+
+    public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
+    public static ThreadLocal<Meter> meter = new ThreadLocal<>();
+    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
+    public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Path("/test")
     public static class TestResource {
@@ -74,7 +87,7 @@ public class CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest {
                     final CircuitBreakerConfiguration circuitBreakerConfiguration) {
                 // Verifying that our configuration was properly parsed.
                 assertThat(circuitBreakerConfiguration.getRateType())
-                        .isSameAs(CircuitBreakerManager.RateType.ONE_MINUTE);
+                        .isSameAs(RateType.ONE_MINUTE);
                 assertThat(circuitBreakerConfiguration.getThreshold()).isEqualTo(0.5d);
 
                 final CircuitBreakerManager circuitBreaker = mock(CircuitBreakerManager.class);
@@ -89,10 +102,12 @@ public class CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest {
                 when(circuitBreaker.getMeter(METER_NAME, 0.5d)).thenReturn(meter);
 
                 final Meter customMeter = mock(Meter.class);
-                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.customMeter.set(customMeter);
+                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.customMeter
+                        .set(customMeter);
                 when(circuitBreaker.getMeter("customName", 0.5d)).thenReturn(customMeter);
 
-                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.metricRegistry.set(environment.metrics());
+                CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest.metricRegistry
+                        .set(environment.metrics());
 
                 return circuitBreaker;
             }
@@ -109,17 +124,6 @@ public class CircuitBreakerBundleIntegrationWithoutCustomCircuitBreakersTest {
             environment.jersey().register(new TestResource());
         }
     }
-
-    @Rule
-    public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
-            TestApplication.class, ResourceHelpers.resourceFilePath("config_without_custom_circuitbreakers.yml"));
-
-    private static Client client;
-
-    public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
-    public static ThreadLocal<Meter> meter = new ThreadLocal<>();
-    public static ThreadLocal<Meter> customMeter = new ThreadLocal<>();
-    public static ThreadLocal<MetricRegistry> metricRegistry = new ThreadLocal<>();
 
     @Before
     public void setupClient() {

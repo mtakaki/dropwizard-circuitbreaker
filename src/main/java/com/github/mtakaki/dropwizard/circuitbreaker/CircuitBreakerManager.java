@@ -22,6 +22,13 @@ import lombok.Getter;
  *
  */
 public class CircuitBreakerManager {
+    private final ConcurrentHashMap<String, MeterThreshold> circuitBreakerMap;
+    private final MetricRegistry metricRegistry;
+    @Getter
+    private final double defaultThreshold;
+    @Getter
+    private final RateType rateType;
+
     /**
      * Holds the {@link Meter} and the threshold. The threshold can either be a
      * custom threshold or the default one.
@@ -34,13 +41,6 @@ public class CircuitBreakerManager {
     }
 
     /**
-     * The rate used to determine if the circuit is opened or not.
-     */
-    public enum RateType {
-        MEAN, ONE_MINUTE, FIVE_MINUTES, FIFTEEN_MINUTES;
-    }
-
-    /**
      * An operation block that will be wrapped by {@link CircuitBreakerManager}
      * and will catch any exception. In case of an exception, it will increase
      * the meter and, eventually, can cause the circuit to open.
@@ -49,13 +49,6 @@ public class CircuitBreakerManager {
     public static interface Operation {
         public void accept(final Meter meter) throws OperationException;
     }
-
-    private final ConcurrentHashMap<String, MeterThreshold> circuitBreakerMap;
-    private final MetricRegistry metricRegistry;
-    @Getter
-    private final double defaultThreshold;
-    @Getter
-    private final RateType rateType;
 
     /**
      * Build a new instance of {@link CircuitBreakerManager}. This instance will
