@@ -15,7 +15,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
-import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager.RateType;
+import com.github.mtakaki.dropwizard.circuitbreaker.RateType;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
@@ -23,11 +23,6 @@ import io.dropwizard.setup.Environment;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CircuitBreakerBundleTest {
-    private static class TestConfiguration extends Configuration {
-    }
-
-    private CircuitBreakerBundle<TestConfiguration> bundle;
-
     @Mock
     private Environment environment;
     @Mock
@@ -41,10 +36,10 @@ public class CircuitBreakerBundleTest {
 
     @Test
     public void testRun() throws Exception {
-        this.bundle = new CircuitBreakerBundle<CircuitBreakerBundleTest.TestConfiguration>() {
+        final CircuitBreakerBundle<Configuration> bundle = new CircuitBreakerBundle<Configuration>() {
             @Override
             protected CircuitBreakerConfiguration getConfiguration(
-                    final TestConfiguration configuration) {
+                    final Configuration configuration) {
                 final CircuitBreakerConfiguration circuitBreaker = new CircuitBreakerConfiguration();
                 circuitBreaker.setRateType(RateType.FIVE_MINUTES);
                 circuitBreaker.setThreshold(0.5d);
@@ -52,13 +47,12 @@ public class CircuitBreakerBundleTest {
             }
         };
 
-        final TestConfiguration configuration = new TestConfiguration();
-        this.bundle.run(configuration, this.environment);
+        bundle.run(new Configuration(), this.environment);
 
         verify(this.jersey, times(1))
                 .register(any(CircuitBreakerApplicationEventListener.class));
 
-        final CircuitBreakerManager manager = this.bundle.getCircuitBreakerManager();
+        final CircuitBreakerManager manager = bundle.getCircuitBreakerManager();
         assertThat(manager.getRateType()).isEqualTo(RateType.FIVE_MINUTES);
         assertThat(manager.getDefaultThreshold()).isEqualTo(0.5d);
     }

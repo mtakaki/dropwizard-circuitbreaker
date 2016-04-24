@@ -3,7 +3,7 @@ package com.github.mtakaki.dropwizard.circuitbreaker.jersey;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.mtakaki.dropwizard.circuitbreaker.CircuitBreakerManager;
+import com.github.mtakaki.dropwizard.circuitbreaker.RateType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +18,7 @@ public class CircuitBreakerConfiguration {
     /**
      * Default threshold rate type.
      */
-    private CircuitBreakerManager.RateType rateType;
+    private RateType rateType;
     /**
      * Custom thresholds with circuit breaker name and threshold value.
      */
