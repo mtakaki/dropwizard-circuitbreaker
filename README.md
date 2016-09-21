@@ -4,6 +4,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/039da749e34a4c46b297ddf1389d593a)](https://www.codacy.com/app/mitsuotakaki/dropwizard-circuitbreaker)
 [![Download](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](http://www.javadoc.io/doc/com.github.mtakaki/dropwizard-circuitbreaker)
+![License](https://img.shields.io/github/license/mtakaki/dropwizard-circuitbreaker.svg)
 
 # Circuit Breaker Library
 
@@ -21,6 +22,7 @@ These are the supported versions of dropwizard:
 |---|---|
 | 0.8.X  | 0.0.2  |
 | 0.9.X  | 0.0.6  |
+| 1.X.X  | 1.0.0  |
 
 ## Stand-alone
 
@@ -168,7 +170,7 @@ The library is available at the maven central, so just add dependency to `pom.xm
   <dependency>
     <groupId>com.github.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>0.0.6</version>
+    <version>1.0.0</version>
   </dependency>
 </dependencies>
 ```
