@@ -5,6 +5,7 @@
 [![Download](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](http://www.javadoc.io/doc/com.github.mtakaki/dropwizard-circuitbreaker)
 ![License](https://img.shields.io/github/license/mtakaki/dropwizard-circuitbreaker.svg)
+[![Dependency Status](https://www.versioneye.com/user/projects/57e784f5bd6fa600512e2134/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/57e784f5bd6fa600512e2134)
 
 # Circuit Breaker Library
 
