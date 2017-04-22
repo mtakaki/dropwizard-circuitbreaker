@@ -158,6 +158,11 @@ public class CircuitBreakerApplicationEventListener implements ApplicationEventL
      *         {@code Optional.empty()} if it's not annotated.
      */
     private Optional<String> getCircuitBreakerName(final ResourceMethod resourceMethod) {
+        // Apparently resourceMethod can be null.
+        if (resourceMethod == null) {
+            return Optional.empty();
+        }
+
         try (Timer.Context context = this.requestOverheadTimer.time()) {
             final Invocable invocable = resourceMethod.getInvocable();
             Method method = invocable.getDefinitionMethod();

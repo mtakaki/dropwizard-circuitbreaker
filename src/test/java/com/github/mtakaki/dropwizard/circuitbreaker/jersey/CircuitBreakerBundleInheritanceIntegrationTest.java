@@ -179,6 +179,14 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
     }
 
+    @Test
+    public void testInvalidURI() {
+        when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
+
+        // We wanted this request to fail.
+        this.sendGetRequestAndVerifyStatus("/", 404);
+    }
+
     /**
      * Testing that when the circuit is open we should get 503 responses.
      */
