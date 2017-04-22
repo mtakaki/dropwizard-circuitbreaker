@@ -179,6 +179,18 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         assertThat(openCircuitMeter.getCount()).isEqualTo(beforeOpenCircuitCount);
     }
 
+    @Test
+    public void testInvalidURI() {
+        when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
+
+        // An invalid URI should return 404 and not fail.
+        final Response response = client.target(
+                String.format("http://localhost:%d/wrong", this.RULE.getLocalPort()))
+                .request().get();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
     /**
      * Testing that when the circuit is open we should get 503 responses.
      */
