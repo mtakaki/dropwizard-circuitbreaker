@@ -183,8 +183,12 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
     public void testInvalidURI() {
         when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
 
-        // We wanted this request to fail.
-        this.sendGetRequestAndVerifyStatus("/", 404);
+        // An invalid URI should return 404 and not fail.
+        final Response response = client.target(
+                String.format("http://localhost:%d/wrong", this.RULE.getLocalPort()))
+                .request().get();
+
+        assertThat(response.getStatus()).isEqualTo(404);
     }
 
     /**
