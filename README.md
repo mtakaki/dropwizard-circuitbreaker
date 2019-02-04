@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/mtakaki/dropwizard-circuitbreaker/badge.svg?branch=master&service=github)](https://coveralls.io/github/mtakaki/dropwizard-circuitbreaker?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/039da749e34a4c46b297ddf1389d593a)](https://www.codacy.com/app/mitsuotakaki/dropwizard-circuitbreaker)
 [![Download](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.mtakaki/dropwizard-circuitbreaker)
-[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.github.mtakaki/dropwizard-circuitbreaker/badge.svg)](http://www.javadoc.io/doc/com.github.mtakaki/dropwizard-circuitbreaker)
+[![Javadoc](http://javadoc.io/badge/com.github.mtakaki/dropwizard-circuitbreaker.svg)](http://www.javadoc.io/doc/com.github.mtakaki/dropwizard-circuitbreaker)
 ![License](https://img.shields.io/github/license/mtakaki/dropwizard-circuitbreaker.svg)
 [![Dependency Status](https://www.versioneye.com/user/projects/57e784f5bd6fa600512e2134/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/57e784f5bd6fa600512e2134)
 
