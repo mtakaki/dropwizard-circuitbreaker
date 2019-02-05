@@ -3,7 +3,7 @@
 
     <groupId>com.github.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.3.8-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>dropwizard-circuitbreaker</name>
@@ -29,7 +29,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>1.1.0</dropwizard.version>
+        <dropwizard.version>1.3.8</dropwizard.version>
         <!-- Flaky test setting, re-run more 2 times in case of a failure -->
         <surefire.rerunFailingTestsCount>2</surefire.rerunFailingTestsCount>
     </properties>
@@ -78,21 +78,21 @@
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
-            <version>3.2.2</version>
+            <version>4.0.2</version>
         </dependency>
 
         <!-- Avoids boilerplate code -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.12</version>
+            <version>1.18.4</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
+            <version>3.8.1</version>
         </dependency>
 
         <!-- jUnit for unit testing -->
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.6.1</version>
+            <version>3.11.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

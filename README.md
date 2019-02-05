@@ -26,6 +26,7 @@ These are the supported versions of dropwizard:
 | 1.0.0  | 1.0.0  |
 | 1.0.5  | 1.0.5  |
 | 1.1.0  | 1.1.0  |
+| 1.3.8  | 1.3.8  |
 
 ## Stand-alone
 
@@ -173,7 +174,7 @@ The library is available at the maven central, so just add dependency to `pom.xm
   <dependency>
     <groupId>com.github.mtakaki</groupId>
     <artifactId>dropwizard-circuitbreaker</artifactId>
-    <version>1.0.5</version>
+    <version>1.3.8</version>
   </dependency>
 </dependencies>
 ```
