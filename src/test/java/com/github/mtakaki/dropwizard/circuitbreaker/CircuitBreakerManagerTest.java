@@ -1,6 +1,7 @@
 package com.github.mtakaki.dropwizard.circuitbreaker;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
@@ -10,18 +11,16 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.assertj.core.data.Percentage;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CircuitBreakerManagerTest {
     private static final String METER_NAME = "test.meter";
     // 1 request per second.
@@ -33,10 +32,7 @@ public class CircuitBreakerManagerTest {
     @Spy
     private MetricRegistry metricRegistry;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() {
         this.circuitBreaker = new CircuitBreakerManager(this.metricRegistry, DEFAULT_THRESHOLD,
                 RateType.MEAN);
@@ -319,9 +315,8 @@ public class CircuitBreakerManagerTest {
         assertThat(meter.getMeanRate()).isGreaterThan(DEFAULT_THRESHOLD);
         assertThat(this.circuitBreaker.isCircuitOpen(METER_NAME)).isTrue();
 
-        this.expectedException.expect(CircuitBreakerOpenedException.class);
-        this.expectedException.expectMessage("Circuit breaker is currently opened: " + METER_NAME);
-        this.circuitBreaker.wrapCodeBlockWithCircuitBreaker(METER_NAME, (currentMeter) -> {
-        });
+        assertThatThrownBy(() -> this.circuitBreaker.wrapCodeBlockWithCircuitBreaker(METER_NAME, (currentMeter) -> {
+        })).isInstanceOf(CircuitBreakerOpenedException.class)
+                .hasMessage("Circuit breaker is currently opened: " + METER_NAME);
     }
 }

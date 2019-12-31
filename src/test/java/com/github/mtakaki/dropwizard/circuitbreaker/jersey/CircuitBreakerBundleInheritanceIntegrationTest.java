@@ -12,13 +12,10 @@ import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
 
-import org.glassfish.jersey.client.ClientProperties;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -28,26 +25,23 @@ import com.github.mtakaki.dropwizard.circuitbreaker.RateType;
 
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.testing.ResourceHelpers;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import io.dropwizard.util.Duration;
-
+import io.dropwizard.testing.DropwizardTestSupport;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import lombok.Getter;
 
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class CircuitBreakerBundleInheritanceIntegrationTest {
     private static final String METER_NAME = CircuitBreakerBundleInheritanceIntegrationTest.TestResource.class
             .getTypeName() + ".get.circuitBreaker";
     private static final String OPEN_CIRCUIT_METER_NAME = METER_NAME + ".openCircuit";
 
-    @Rule
-    public final DropwizardAppRule<TestConfiguration> RULE = new DropwizardAppRule<TestConfiguration>(
-            TestApplication.class, ResourceHelpers.resourceFilePath("config.yml"));
-
-    private static Client client;
+    private final DropwizardTestSupport<TestConfiguration> testSupport = new DropwizardTestSupport<>(
+            TestApplication.class, "src/test/resources/config.yml");
+    private final DropwizardAppExtension<TestConfiguration> DROPWIZARD = new DropwizardAppExtension<>(
+            this.testSupport);
 
     public static ThreadLocal<CircuitBreakerManager> circuitBreakerManager = new ThreadLocal<>();
     public static ThreadLocal<Meter> meter = new ThreadLocal<>();
@@ -133,18 +127,6 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         }
     }
 
-    @Before
-    public void setupClient() {
-        final JerseyClientConfiguration jerseyClientConfiguration = new JerseyClientConfiguration();
-        jerseyClientConfiguration.setConnectionTimeout(Duration.minutes(1L));
-        jerseyClientConfiguration.setConnectionRequestTimeout(Duration.minutes(1L));
-        jerseyClientConfiguration.setTimeout(Duration.minutes(1L));
-        client = new JerseyClientBuilder(this.RULE.getEnvironment())
-                .using(jerseyClientConfiguration)
-                .withProperty(ClientProperties.FOLLOW_REDIRECTS, Boolean.FALSE)
-                .build("test client");
-    }
-
     /**
      * Testing that our meter gets incremented when a request fails. This should
      * behave like an {@link ExceptionMetered} annotation.
@@ -184,8 +166,8 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
         when(circuitBreakerManager.get().isCircuitOpen("custom")).thenReturn(false);
 
         // An invalid URI should return 404 and not fail.
-        final Response response = client.target(
-                String.format("http://localhost:%d/wrong", this.RULE.getLocalPort()))
+        final Response response = this.DROPWIZARD.client().target(
+                String.format("http://localhost:%d/wrong", this.DROPWIZARD.getLocalPort()))
                 .request().get();
 
         assertThat(response.getStatus()).isEqualTo(404);
@@ -248,8 +230,8 @@ public class CircuitBreakerBundleInheritanceIntegrationTest {
      *            The expected status code.
      */
     private void sendGetRequestAndVerifyStatus(final String path, final int httpStatus) {
-        final Response response = client.target(
-                String.format("http://localhost:%d%s", this.RULE.getLocalPort(), path))
+        final Response response = this.DROPWIZARD.client().target(
+                String.format("http://localhost:%d%s", this.DROPWIZARD.getLocalPort(), path))
                 .request().get();
 
         assertThat(response.getStatus()).isEqualTo(httpStatus);
